@@ -1,46 +1,50 @@
 const apiUsersRouter = require('express').Router();
-const fs = require('fs');
-const path = require('path');
+const UserModel = require('../models/user.js');
 
 apiUsersRouter.get('/users', (req, res) => {
-  const usersPath = path.join(__dirname, '..', 'data', 'users.json');
-
-  fs.promises
-    .readFile(usersPath, {
-      encoding: 'utf8',
-    })
-    .then((data) => {
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-      });
-      res.end(data);
-    })
-    .catch(() => {
-      res.status(404).send({ message: 'Internal Server Error' });
-    });
+  UserModel.find({})
+    .then((users) => res.send({ data: users }))
+    .catch(() => res.status(500).send({ message: 'Internal Server Error' }));
 });
 
 apiUsersRouter.get('/users/:id', (req, res) => {
-  const usersPath = path.join(__dirname, '..', 'data', 'users.json');
+  const { id } = req.params;
 
-  fs.promises
-    .readFile(usersPath, {
-      encoding: 'utf8',
-    })
-    .then((users) => JSON.parse(users).filter((item) => item._id === req.params.id))
-    .then((searchedUser) => {
-      if (searchedUser.length === 0) {
-        res.status(404).send({ message: 'Нет пользователя с таким id' });
-        return;
-      }
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-      });
-      res.end(JSON.stringify(searchedUser));
-    })
-    .catch(() => {
-      res.status(500).send({ message: 'Internal Server Error' });
-    });
+  UserModel.findById(id)
+    .then((user) => res.send({ data: user }))
+    .catch(() => res.status(404).send({ message: 'Нет пользователя с таким id' }));
+});
+
+apiUsersRouter.post('/users', (req, res) => {
+  const { name, about, avatar } = req.body;
+
+  UserModel.create({ name, about, avatar })
+    .then((user) => res.send({ data: user }))
+    .catch(() => res.status(500).send({ message: 'Internal Server Error' }));
+});
+
+apiUsersRouter.patch('/users/me', (req, res) => {
+  const { name, about } = req.body;
+
+  UserModel.findByIdAndUpdate(req.user._id, { name, about }, {
+    new: true,
+    runValidators: true,
+    upsert: true,
+  })
+    .then((user) => res.send({ data: user }))
+    .catch(() => res.status(500).send({ message: 'Internal Server Error' }));
+});
+
+apiUsersRouter.patch('/users/me/avatar', (req, res) => {
+  const { avatar } = req.body;
+
+  UserModel.findByIdAndUpdate(req.user._id, { avatar }, {
+    new: true,
+    runValidators: true,
+    upsert: true,
+  })
+    .then((user) => res.send({ data: user }))
+    .catch(() => res.status(500).send({ message: 'Internal Server Error' }));
 });
 
 module.exports = apiUsersRouter;
