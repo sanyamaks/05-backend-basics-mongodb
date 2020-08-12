@@ -28,10 +28,10 @@ module.exports.updateUser = (req, res) => {
   UserModel.findByIdAndUpdate(req.user._id, { name, about }, {
     new: true,
     runValidators: true,
-    upsert: true,
-  })
+    upsert: false,
+  }).orFail()
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(400).send({ message: 'Bad Request' }));
+    .catch(() => res.status(400).send({ message: 'Bad Request'}));
 };
 
 module.exports.updateUserAvatar = (req, res) => {
@@ -40,8 +40,8 @@ module.exports.updateUserAvatar = (req, res) => {
   UserModel.findByIdAndUpdate(req.user._id, { avatar }, {
     new: true,
     runValidators: true,
-    upsert: true,
-  })
+    upsert: false,
+  }).orFail()
     .then((user) => res.send({ data: user }))
     .catch(() => res.status(400).send({ message: 'Bad Request' }));
 };
